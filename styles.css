@@ -32,10 +32,24 @@ body {
 }
 
 main {
-  display: grid;
-  place-items: center;
   min-height: calc(100vh - 64px);
   padding: 1.5rem;
+}
+
+.lab-warning {
+  max-width: 900px;
+  margin: 0 auto 1.25rem;
+  padding: 1rem;
+  border-left: 5px solid #ffb300;
+  border-radius: 4px;
+  background: #4b3a16;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 430px));
+  justify-content: center;
+  gap: 1.5rem;
 }
 
 .login-card {
@@ -46,7 +60,8 @@ main {
   box-shadow: 0 8px 28px rgb(0 0 0 / 35%);
 }
 
-h1 {
+h1,
+h2 {
   margin: 0;
   font-size: 1.75rem;
 }
@@ -97,7 +112,7 @@ button:hover {
   background: #a4bc3c;
 }
 
-#form-message {
+.form-message {
   min-height: 1.3rem;
   margin-top: 0.5rem;
 }
@@ -108,4 +123,10 @@ button:hover {
 
 .success {
   color: #b9f6ca;
+}
+
+@media (max-width: 760px) {
+  .card-grid {
+    grid-template-columns: minmax(0, 430px);
+  }
 }

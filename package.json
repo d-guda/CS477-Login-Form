@@ -2,12 +2,12 @@
   "name": "juice-shop-login-form",
   "version": "1.0.0",
   "private": true,
-  "description": "A small Juice Shop-inspired login form with client-side and server-side validation.",
+  "description": "A local Juice Shop-inspired account and SQL-injection training lab.",
   "scripts": {
     "start": "node server.js",
     "test": "node --test"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.5"
   }
 }

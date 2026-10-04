@@ -1,5 +1,5 @@
-const form = document.querySelector('#login-form');
-const message = document.querySelector('#form-message');
+const loginForm = document.querySelector('#login-form');
+const registerForm = document.querySelector('#register-form');
 
 function validateForm(email, password) {
   const errors = [];
@@ -19,25 +19,24 @@ function validateForm(email, password) {
   return errors;
 }
 
-function showMessage(text, type) {
+function showMessage(form, text, type) {
+  const message = form.querySelector('.form-message');
   message.textContent = text;
-  message.className = type;
+  message.className = `form-message ${type}`;
 }
 
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  const email = form.email.value;
-  const password = form.password.value;
+async function submitCredentials(form, endpoint) {
+  const email = form.elements.email.value;
+  const password = form.elements.password.value;
   const clientErrors = validateForm(email, password);
 
   if (clientErrors.length > 0) {
-    showMessage(clientErrors.join(' '), 'error');
+    showMessage(form, clientErrors.join(' '), 'error');
     return;
   }
 
   try {
-    const response = await fetch('/api/login', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -45,13 +44,24 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
 
     if (!response.ok) {
-      showMessage(result.errors.join(' '), 'error');
+      showMessage(form, result.errors.join(' '), 'error');
       return;
     }
 
-    showMessage(result.message, 'success');
+    const text = result.warning ? `${result.message} ${result.warning}` : result.message;
+    showMessage(form, text, 'success');
     form.reset();
   } catch {
-    showMessage('Unable to contact the server.', 'error');
+    showMessage(form, 'Unable to contact the server.', 'error');
   }
+}
+
+loginForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitCredentials(loginForm, '/api/login');
+});
+
+registerForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitCredentials(registerForm, '/api/register');
 });

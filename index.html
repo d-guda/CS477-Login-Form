@@ -3,32 +3,54 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juice Shop Login Demo</title>
+    <title>Juice Shop Login Lab</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="/app.js" defer></script>
   </head>
   <body>
     <header class="topbar">
       <span class="logo" aria-hidden="true">🍊</span>
-      <span>Juice Shop Login Demo</span>
+      <span>Juice Shop Login Lab</span>
     </header>
 
     <main>
-      <section class="login-card" aria-labelledby="login-title">
-        <h1 id="login-title">Login</h1>
-        <p class="subtitle">Enter your account information.</p>
+      <div class="lab-warning" role="note">
+        <strong>Local training app:</strong> the login query is intentionally vulnerable. Never deploy it.
+      </div>
 
-        <form id="login-form" novalidate>
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" autocomplete="email" required>
+      <div class="card-grid">
+        <section class="login-card" aria-labelledby="login-title">
+          <h1 id="login-title">Login</h1>
+          <p class="subtitle">Use an existing account—or test the lab vulnerability.</p>
 
-          <label for="password">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+          <form id="login-form" novalidate>
+            <label for="login-email">Email</label>
+            <input id="login-email" name="email" type="text" autocomplete="email" required>
 
-          <button type="submit">Log in</button>
-          <div id="form-message" role="alert" aria-live="polite"></div>
-        </form>
-      </section>
+            <label for="login-password">Password</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+
+            <button type="submit">Log in</button>
+            <div class="form-message" role="alert" aria-live="polite"></div>
+          </form>
+        </section>
+
+        <section class="login-card" aria-labelledby="register-title">
+          <h2 id="register-title">Create account</h2>
+          <p class="subtitle">Accounts remain in the local SQLite database.</p>
+
+          <form id="register-form" novalidate>
+            <label for="register-email">Email</label>
+            <input id="register-email" name="email" type="email" autocomplete="email" required>
+
+            <label for="register-password">Password</label>
+            <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+
+            <button type="submit">Create account</button>
+            <div class="form-message" role="alert" aria-live="polite"></div>
+          </form>
+        </section>
+      </div>
     </main>
   </body>
 </html>

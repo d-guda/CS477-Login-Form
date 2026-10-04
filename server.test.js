@@ -1,6 +1,17 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const { createServer, validateCredentials } = require('./server');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { createDatabase, createServer, validateCredentials } = require('./server');
+
+async function post(baseUrl, endpoint, body) {
+  return fetch(`${baseUrl}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
 
 test('server validation rejects missing or malformed credentials', () => {
   assert.deepEqual(validateCredentials('', ''), [
@@ -13,28 +24,75 @@ test('server validation rejects missing or malformed credentials', () => {
   ]);
 });
 
-test('server validation accepts valid-shaped credentials', () => {
-  assert.deepEqual(validateCredentials('student@example.com', 'password123'), []);
+test('accounts persist after the database is closed and reopened', (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cs477-login-'));
+  const filename = path.join(directory, 'users.db');
+  context.after(() => fs.rmSync(directory, { recursive: true }));
+
+  const firstConnection = createDatabase(filename);
+  firstConnection.prepare('INSERT INTO users (email, password) VALUES (?, ?)')
+    .run('persistent@example.com', 'test-hash');
+  firstConnection.close();
+
+  const secondConnection = createDatabase(filename);
+  const savedUser = secondConnection.prepare('SELECT email FROM users WHERE email = ?')
+    .get('persistent@example.com');
+  secondConnection.close();
+
+  assert.equal(savedUser.email, 'persistent@example.com');
 });
 
-test('POST /api/login enforces validation and accepts valid input', async (context) => {
-  const server = createServer();
-  await new Promise((resolve) => server.listen(0, resolve));
-  context.after(() => server.close());
-  const { port } = server.address();
-
-  const invalidResponse = await fetch(`http://127.0.0.1:${port}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'invalid', password: 'tiny' })
+test('registration persists an account and login checks its credentials', async (context) => {
+  const database = createDatabase(':memory:');
+  const server = createServer({ database });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  context.after(() => {
+    server.close();
+    database.close();
   });
-  assert.equal(invalidResponse.status, 400);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
 
-  const validResponse = await fetch(`http://127.0.0.1:${port}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'student@example.com', password: 'password123' })
+  const registerResponse = await post(baseUrl, '/api/register', {
+    email: 'student@example.com',
+    password: 'correct-password'
   });
-  assert.equal(validResponse.status, 200);
-  assert.equal((await validResponse.json()).ok, true);
+  assert.equal(registerResponse.status, 201);
+
+  const duplicateResponse = await post(baseUrl, '/api/register', {
+    email: 'student@example.com',
+    password: 'another-password'
+  });
+  assert.equal(duplicateResponse.status, 409);
+
+  const wrongPasswordResponse = await post(baseUrl, '/api/login', {
+    email: 'student@example.com',
+    password: 'wrong-password'
+  });
+  assert.equal(wrongPasswordResponse.status, 401);
+
+  const loginResponse = await post(baseUrl, '/api/login', {
+    email: 'student@example.com',
+    password: 'correct-password'
+  });
+  assert.equal(loginResponse.status, 200);
+});
+
+test('the training login can be bypassed with SQL injection', async (context) => {
+  const database = createDatabase(':memory:');
+  database.prepare('INSERT INTO users (email, password) VALUES (?, ?)')
+    .run('victim@example.com', 'test-hash');
+  const server = createServer({ database });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  context.after(() => {
+    server.close();
+    database.close();
+  });
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  const response = await post(baseUrl, '/api/login', {
+    email: "' OR 1=1 -- @",
+    password: 'anything'
+  });
+  assert.equal(response.status, 200);
+  assert.match((await response.json()).warning, /intentionally vulnerable/i);
 });

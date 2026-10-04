@@ -1,41 +1,67 @@
-# Juice Shop Login Form
+# CSCE 477 Login Form Lab
 
-A small OWASP Juice Shop-inspired login page built with HTML, CSS, client-side JavaScript, and a Node.js server. It demonstrates the same validation rules in two places:
+A local OWASP Juice Shop-inspired login lab built with HTML, CSS, browser-side JavaScript, Node.js, and SQLite. Users can create accounts, and the database persists them between runs.
 
-- The browser blocks empty fields, emails without `@`, and passwords shorter than eight characters.
-- The server repeats those checks because browser validation can be bypassed.
-
-This is a validation demo. It does not store users, passwords, or authenticate real accounts.
+> **Warning:** The login query is intentionally vulnerable to SQL injection for an authorized, local class exercise. Do not deploy this application or reuse its login code. Do not enter a real password.
 
 ## Requirements
 
-- Node.js 18 or newer
+- Node.js 22.5 or newer (uses the built-in `node:sqlite` module)
 
 ## Run locally
 
-1. Clone this repository and enter its folder.
+1. Clone the repository and enter its folder.
 2. Start the server:
 
    ```bash
    npm start
    ```
 
-3. Open <http://localhost:4173>.
+3. Open <http://localhost:4174>.
+4. Create a test account, then log in with the same email and password.
+
+Accounts are stored locally in `users.db`. That file is ignored by Git and should not be committed. Passwords are stored as weak MD5 hashes to mirror Juice Shop's training design; never enter a real password.
+
+## Demonstrate the SQL injection
+
+1. Create at least one test account.
+2. In the login form, enter this email:
+
+   ```text
+   ' OR 1=1 -- @
+   ```
+
+3. Enter any password containing at least eight characters.
+4. Select **Log in**. The query's `OR 1=1` condition becomes true, while `--` comments out the password check.
+
+The vulnerable query is intentionally isolated in `handleLogin()` in `server.js`:
+
+```js
+const query = `SELECT id, email FROM users WHERE email = '${email}' AND password = '${hashPassword(password)}' LIMIT 1`;
+```
+
+## Why the vulnerability works
+
+The server joins the untrusted email directly into SQL code. SQLite treats part of the supplied email as SQL syntax instead of plain data. Client-side validation does not stop the attack because the payload contains `@`, and an attacker can bypass browser checks anyway.
+
+## Connection to OWASP Juice Shop
+
+This lab copies the essential teaching pattern from Juice Shop's login backend: an email is concatenated into a SQL query, and the password is MD5-hashed before comparison. It intentionally leaves out Juice Shop's unrelated baskets, JWTs, roles, two-factor authentication, and challenge tracking.
+
+## Secure fix
+
+Real applications must use a parameterized query and a modern password-hashing algorithm:
+
+```js
+database.prepare('SELECT id, email, password_hash FROM users WHERE email = ?').get(email);
+```
+
+Then compare the submitted password against an Argon2id, scrypt, or bcrypt hash. Never use MD5 for production passwords.
 
 ## Test
-
-Run the automated server-validation tests:
 
 ```bash
 npm test
 ```
 
-## Validation flow
-
-1. `app.js` checks the form before sending it.
-2. Valid-looking input is sent as JSON to `POST /api/login`.
-3. `server.js` independently checks the input and returns either status `400` with errors or status `200` for the demo success case.
-
-## Security note
-
-Client-side validation improves usability but does not provide security. A user can disable or bypass browser JavaScript, so the server must treat all incoming data as untrusted and validate it again.
+The automated tests prove that registration persists, duplicate registration is rejected, normal login rejects a wrong password, normal login accepts correct credentials, and the intentional SQL-injection bypass succeeds.
