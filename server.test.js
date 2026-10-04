@@ -3,7 +3,7 @@ const { test } = require('node:test');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createDatabase, createServer, validateCredentials } = require('./server');
+const { createDatabase, createServer, validateCredentials, validateLoginInput } = require('./server');
 
 async function post(baseUrl, endpoint, body) {
   return fetch(`${baseUrl}${endpoint}`, {
@@ -22,6 +22,10 @@ test('server validation rejects missing or malformed credentials', () => {
     'Email must contain @.',
     'Password must be at least 8 characters.'
   ]);
+});
+
+test('login allows SQL-shaped input and a short non-empty password', () => {
+  assert.deepEqual(validateLoginInput("' OR 1=1 -- @", 'x'), []);
 });
 
 test('accounts persist after the database is closed and reopened', (context) => {
@@ -79,8 +83,6 @@ test('registration persists an account and login checks its credentials', async 
 
 test('the training login can be bypassed with SQL injection', async (context) => {
   const database = createDatabase(':memory:');
-  database.prepare('INSERT INTO users (email, password) VALUES (?, ?)')
-    .run('victim@example.com', 'test-hash');
   const server = createServer({ database });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   context.after(() => {
@@ -91,7 +93,7 @@ test('the training login can be bypassed with SQL injection', async (context) =>
 
   const response = await post(baseUrl, '/api/login', {
     email: "' OR 1=1 -- @",
-    password: 'anything'
+    password: 'x'
   });
   assert.equal(response.status, 200);
   assert.match((await response.json()).warning, /intentionally vulnerable/i);

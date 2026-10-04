@@ -1,7 +1,7 @@
 const loginForm = document.querySelector('#login-form');
 const registerForm = document.querySelector('#register-form');
 
-function validateForm(email, password) {
+function validateRegistration(email, password) {
   const errors = [];
 
   if (!email.trim()) {
@@ -19,16 +19,23 @@ function validateForm(email, password) {
   return errors;
 }
 
+function validateLogin(email, password) {
+  const errors = [];
+  if (!email) errors.push('Email is required.');
+  if (!password) errors.push('Password is required.');
+  return errors;
+}
+
 function showMessage(form, text, type) {
   const message = form.querySelector('.form-message');
   message.textContent = text;
   message.className = `form-message ${type}`;
 }
 
-async function submitCredentials(form, endpoint) {
+async function submitCredentials(form, endpoint, validate) {
   const email = form.elements.email.value;
   const password = form.elements.password.value;
-  const clientErrors = validateForm(email, password);
+  const clientErrors = validate(email, password);
 
   if (clientErrors.length > 0) {
     showMessage(form, clientErrors.join(' '), 'error');
@@ -58,10 +65,10 @@ async function submitCredentials(form, endpoint) {
 
 loginForm.addEventListener('submit', (event) => {
   event.preventDefault();
-  submitCredentials(loginForm, '/api/login');
+  submitCredentials(loginForm, '/api/login', validateLogin);
 });
 
 registerForm.addEventListener('submit', (event) => {
   event.preventDefault();
-  submitCredentials(registerForm, '/api/register');
+  submitCredentials(registerForm, '/api/register', validateRegistration);
 });

@@ -17,21 +17,20 @@ A local OWASP Juice Shop-inspired login lab built with HTML, CSS, browser-side J
    ```
 
 3. Open <http://localhost:4174>.
-4. Create a test account, then log in with the same email and password.
+4. Create a test account, then log in with the same email and password. A built-in `demo@juice-sh.op` account also guarantees that the injection exercise has a row to return.
 
 Accounts are stored locally in `users.db`. That file is ignored by Git and should not be committed. Passwords are stored as weak MD5 hashes to mirror Juice Shop's training design; never enter a real password.
 
 ## Demonstrate the SQL injection
 
-1. Create at least one test account.
-2. In the login form, enter this email:
+1. In the login form, enter this email:
 
    ```text
    ' OR 1=1 -- @
    ```
 
-3. Enter any password containing at least eight characters.
-4. Select **Log in**. The query's `OR 1=1` condition becomes true, while `--` comments out the password check.
+2. Enter any non-empty password.
+3. Select **Log in**. The query's `OR 1=1` condition becomes true, while `--` comments out the password check. The seeded demo account ensures SQLite has a user row to return.
 
 The vulnerable query is intentionally isolated in `handleLogin()` in `server.js`:
 

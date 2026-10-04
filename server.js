@@ -30,6 +30,18 @@ function validateCredentials(email, password) {
   return errors;
 }
 
+function hashPassword(password) {
+  // Mirrors Juice Shop's intentionally weak MD5 password storage for this lab.
+  return crypto.createHash('md5').update(password).digest('hex');
+}
+
+function validateLoginInput(email, password) {
+  const errors = [];
+  if (typeof email !== 'string' || email === '') errors.push('Email is required.');
+  if (typeof password !== 'string' || password === '') errors.push('Password is required.');
+  return errors;
+}
+
 function createDatabase(filename = DATABASE_PATH) {
   const database = new DatabaseSync(filename);
   database.exec(`
@@ -39,12 +51,9 @@ function createDatabase(filename = DATABASE_PATH) {
       password TEXT NOT NULL
     )
   `);
+  database.prepare('INSERT OR IGNORE INTO users (email, password) VALUES (?, ?)')
+    .run('demo@juice-sh.op', hashPassword('demo-password'));
   return database;
-}
-
-function hashPassword(password) {
-  // Mirrors Juice Shop's intentionally weak MD5 password storage for this lab.
-  return crypto.createHash('md5').update(password).digest('hex');
 }
 
 function sendJson(response, statusCode, body) {
@@ -94,7 +103,7 @@ function handleRegister(request, response, database) {
 
 function handleLogin(request, response, database) {
   readJson(request, response, ({ email, password }) => {
-    const errors = validateCredentials(email, password);
+    const errors = validateLoginInput(email, password);
     if (errors.length > 0) {
       sendJson(response, 400, { ok: false, errors });
       return;
@@ -160,4 +169,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createDatabase, createServer, validateCredentials };
+module.exports = { createDatabase, createServer, validateCredentials, validateLoginInput };
