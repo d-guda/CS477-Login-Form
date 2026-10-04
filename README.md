@@ -2,7 +2,6 @@
 
 A local OWASP Juice Shop-inspired login lab built with HTML, CSS, browser-side JavaScript, Node.js, and SQLite. Users can create accounts, and the database persists them between runs.
 
-> **Warning:** The login query is intentionally vulnerable to SQL injection for an authorized, local class exercise. Do not deploy this application or reuse its login code. Do not enter a real password.
 
 ## Requirements
 
