@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juice Shop Login Demo</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="logo" aria-hidden="true">🍊</span>
+      <span>Juice Shop Login Demo</span>
+    </header>
+
+    <main>
+      <section class="login-card" aria-labelledby="login-title">
+        <h1 id="login-title">Login</h1>
+        <p class="subtitle">Enter your account information.</p>
+
+        <form id="login-form" novalidate>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+
+          <button type="submit">Log in</button>
+          <div id="form-message" role="alert" aria-live="polite"></div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
